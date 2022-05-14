@@ -1,4 +1,4 @@
-# Super irudi
+# Super Irudi
 
 Super Irudi is a command line based tool which aims to help automating some common tasks for enhancing photographs.
 
