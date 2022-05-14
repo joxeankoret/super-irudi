@@ -4,7 +4,7 @@ Super Irudi is a command line based tool which aims to help automating some comm
 
 # Example usages
 
-For example, let's say that you have one photograph with nice colors and another one with not that good colors and you want to 'copy' the color histogram from one to another, one can run a command line like the following one:
+For example, let's say that you have one photograph with nice colors (in our example, one for the galaxy M51) and another one with not that good colors (the galaxy M74) and you want to 'copy' the color histogram from one to another, one can run a command line like the following one:
 ```
 $ ./super_irudi.py m74-bad-core.jpg -i -mh m51-good-core.jpg
 [Sat May 14 16:10:46 2022] Matching histograms...
