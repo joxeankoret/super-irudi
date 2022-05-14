@@ -1,6 +1,6 @@
 # Super Irudi
 
-Super Irudi is a command line based tool which aims to help automating some common tasks for enhancing photographs.
+Super Irudi is a command line based tool which aims to help automating some common tasks for enhancing photographs. In case you're curious, "irudi" literally means "picture" in Basque. That's all about the name. "Super Picture", in Basque. Yes. I'm that original.
 
 # Example usages
 
