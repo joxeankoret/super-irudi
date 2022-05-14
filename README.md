@@ -2,9 +2,17 @@
 
 Super Irudi is a command line based tool which aims to help automating some common tasks for enhancing photographs. In case you're curious, "irudi" literally means "picture" in Basque. That's all about the name. "Super Picture", in Basque. Yes. I'm that original.
 
+# Installation
+
+This tool requires Python 3 and a set of libraries that can be installed with the following command:
+
+```
+$ pip3 install -r requirements.txt
+```
+
 # Example usages
 
-For example, let's say that you have one photograph with nice colors (in our example, one for the galaxy M51) and another one with not that good colors (the galaxy M74) and you want to 'copy' the color histogram from one to another, one can run a command line like the following one:
+For example, let's say that you have one photograph with nice colors (in our example, one for the galaxy M51) and another one with not that good colors (the galaxy M74) and you want to 'copy' the color histogram (command line option `-mh`) from one to another, one can run a command line like the following one:
 ```
 $ ./super_irudi.py m74-bad-core.jpg -i -mh m51-good-core.jpg
 [Sat May 14 16:10:46 2022] Matching histograms...
