@@ -78,7 +78,7 @@ A painting (by Ikerne Tapia) with the color histogram of the Van Gogh's painting
 
 ![Ikerne's painting as a Van Gogh painting](https://github.com/joxeankoret/super-irudi/blob/main/examples/ikerne2-as-van-gogh.png)
 
-A black & white Mars picture by NASA's Perseverance colorized with the histogram of a color image from NASA's Curiositiy rover:
+A black & white Mars picture by NASA's Perseverance colorized with the histogram of a color image from NASA's Curiosity rover:
 
 ![Mars, Perseverance as Curiosity](https://github.com/joxeankoret/super-irudi/blob/main/examples/histograms-colorizer.png)
 
