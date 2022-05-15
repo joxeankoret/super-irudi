@@ -24,9 +24,12 @@ import time
 
 import cv2
 import PIL
+import requests
+
 import numpy as np
 import matplotlib.pyplot as plt
 
+from io import BytesIO
 from skimage import data, exposure
 from skimage.color import rgb2gray
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
@@ -90,15 +93,15 @@ class CSuperIrudiTool:
 
     if self.interactive:
       log("Displaying final image")
-      fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(8, 3),
-                                          sharex=True, sharey=True)
-      for aa in (ax1, ax2, ax3):
+      fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 3),
+                                     sharex=True, sharey=True)
+      for aa in (ax1, ax2):
           aa.set_axis_off()
 
       ax1.imshow(image)
       ax1.set_title('Source')
-      ax3.imshow(matched)
-      ax3.set_title('Matched')
+      ax2.imshow(matched)
+      ax2.set_title('Matched')
 
       plt.tight_layout()
       mng = plt.get_current_fig_manager()
@@ -123,7 +126,7 @@ class CSuperIrudiTool:
     if self.interactive:
       log("Displaying final image")
 
-      fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(8, 3),
+      fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(8, 3),
                                           sharex=True, sharey=True)
       for aa in (ax1, ax2, ax3):
           aa.set_axis_off()
@@ -263,6 +266,43 @@ class CSuperIrudiTool:
   #
   ##############################################################################
 
+  def deoldify(self, url):
+    """
+    Connect to a DeOldify instance to colorize the current image.
+    """
+    log("Uploading image...")
+    byte_io = BytesIO()
+    self.img.save(byte_io, 'png')
+    byte_io.seek(0)
+    d = {'file': ('1.png', byte_io, 'image/png')}
+    r = requests.post(url, files=d)
+    if r.status_code != 200:
+      log("Remote error: %s" % r.reason)
+      return
+
+    prev = self.img
+    self.img = Image.open(BytesIO(r.content))
+    if self.interactive:
+      self.show(prev)
+    
+  def auto_balance(self):
+    """
+    Automatically adjust white balance.
+    """
+    img = np.asarray(self.img)
+    balanced_img = np.zeros_like(img)
+    for i in range(3):
+      hist, bins = np.histogram(img[..., i].ravel(), 256, (0, 256))
+      bmin = np.min(np.where(hist>(hist.sum()*0.0005)))
+      bmax = np.max(np.where(hist>(hist.sum()*0.0005)))
+      balanced_img[...,i] = np.clip(img[...,i], bmin, bmax)
+      balanced_img[...,i] = (balanced_img[...,i]-bmin) / (bmax - bmin) * 255
+    
+    prev = self.img
+    self.img = Image.fromarray(balanced_img)
+    if self.interactive:
+      self.show(prev)
+
 #-------------------------------------------------------------------------------
 def main(args):
   out_file = None
@@ -383,6 +423,12 @@ def main(args):
       tool.apply_summer_winter(False)
     elif arg == "--winter":
       tool.apply_summer_winter(True)
+    elif arg.startswith("-do") or arg.startswith("--deoldify"):
+      pos = arg.find("=")
+      val = arg[pos+1:]
+      tool.deoldify(val)
+    elif arg in ["-ab", "--auto-white-balance"]:
+      tool.auto_balance()
     elif arg == "--debug":
       global DEBUG
       DEBUG = True
@@ -407,6 +453,8 @@ def usage():
   print("-c=/--color=<value>              Adjust image color balance, value 0 to 1.")
   print("-con=/--contrast=<value>         Adjust image contrast, value 0 to 1.")
   print("-ac/--auto-contrast              Normalize image contrast.")
+  print("-do=/--deoldify=<url>            Colorize using DeOldify server at given URL.")
+  print("-ab/--auto-white-balance         Automatic white balance.")
   print()
 
 if __name__ == "__main__":
@@ -417,6 +465,8 @@ if __name__ == "__main__":
       main(sys.argv[1:])
     except SystemExit as e:
       sys.exit(e)
+    except KeyboardInterrupt:
+      print("Aborted")
     except:
       err = str(sys.exc_info()[1])
       print("ERROR:", err)
