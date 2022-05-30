@@ -96,13 +96,19 @@ class CSuperIrudiTool:
         aa.set_axis_off()
 
     if prev is not None:
-      ax1.imshow(prev, cmap=cmap)
+      min_height = min(prev.height, self.img.height)
+      min_width  = min(prev.width,  self.img.width)
+
+      ax1.imshow(prev.resize([min_width, min_height], Image.Resampling.LANCZOS), cmap=cmap)
       ax1.set_title('Previous')
     else:
-      ax1.imshow(self.original, cmap=cmap)
+      min_height = min(self.img.height, self.original.height)
+      min_width  = min(self.img.width,  self.original.width)
+
+      ax1.imshow(self.original.resize([min_width, min_height], Image.Resampling.LANCZOS), cmap=cmap)
       ax1.set_title('Original')
 
-    ax2.imshow(self.img, cmap=cmap)
+    ax2.imshow(self.img.resize([min_width, min_height], Image.Resampling.LANCZOS), cmap=cmap)
     ax2.set_title('Current')
 
     plt.tight_layout()
@@ -160,7 +166,7 @@ class CSuperIrudiTool:
         nrows = self.nrows
         ncols = self.ncols
 
-      fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(8, 3),
+      fig, (ax1, ax2, ax3) = plt.subplots(nrows=nrows, ncols=ncols, figsize=(8, 3),
                                           sharex=True, sharey=True)
       for aa in (ax1, ax2, ax3):
           aa.set_axis_off()
@@ -555,7 +561,30 @@ class CSuperIrudiTool:
     self.img = Image.fromarray(img)
     if self.interactive:
       self.show(prev)
-  
+
+  def apply_model(self, model):
+    sr = cv2.dnn_superres.DnnSuperResImpl_create()
+
+    model_name = model.split(os.path.sep)[-1].split("_")[0]
+    model_scale = model.split("_x")[-1]
+    model_scale = int(model_scale[:model_scale.find(".")])
+
+    sr.readModel(model)
+    sr.setModel(model_name.lower(), model_scale)
+
+    image = np.asarray(self.img)
+
+    log("Applying model %s, upscaling to %sx" % (model_name, model_scale))
+    start = time.time()
+    upscaled = sr.upsample(image)
+    end = time.time()
+    log("Model applied in %f seconds" % (end - start))
+
+    prev = self.img
+    self.img = Image.fromarray(upscaled)
+    if self.interactive:
+      self.show(prev)
+
 #-------------------------------------------------------------------------------
 def main(args):
   out_file = None
@@ -760,6 +789,18 @@ def main(args):
       global USER_AGENT
       pos = arg.find("=")
       USER_AGENT = arg[pos+1:]
+    elif arg in ["-md", "--model"]:
+      if i+1 >= len(l):
+        print("No model file given to %s" % repr(arg))
+        sys.exit(1)
+
+      ignore_next = True
+      model = l[i+1]
+      if os.path.exists(model):
+        tool.apply_model(model)
+      else:
+        print("Model %s does not exists" % repr(model))
+        sys.exit(1)
     else:
       print("Unknown command line option %s" % repr(arg))
       sys.exit(2)
@@ -799,6 +840,7 @@ def usage():
   print("--ncols=<value>                  Set the number of columns for displaying images.")
   print("-p/--print <message>             Show the given message.")
   print("-ua=/--user-agent=<agent>        Set the given User-Agent.")
+  print("-md/--model <model>              Apply an image enhancement pre-trained model.")
   print()
 
 if __name__ == "__main__":
